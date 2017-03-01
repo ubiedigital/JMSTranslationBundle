@@ -203,7 +203,11 @@ class FileExtractor implements ExtractorInterface, LoggerAwareInterface
         }
 
         $curTwigLoader = $this->twig->getLoader();
-        $this->twig->setLoader(new \Twig_Loader_String());
+        if (\Twig_Environment::MAJOR_VERSION === 1) {
+            $this->twig->setLoader(new \Twig_Loader_String());
+        } else {
+            $this->twig->setLoader(new \Twig_Loader_Array());
+        }
 
         try {
             $catalogue = new MessageCatalogue();
@@ -227,7 +231,12 @@ class FileExtractor implements ExtractorInterface, LoggerAwareInterface
                         $visitingArgs[] = $ast;
                     } elseif ('twig' === $extension) {
                         $visitingMethod = 'visitTwigFile';
-                        $visitingArgs[] = $this->twig->parse($this->twig->tokenize(file_get_contents($file), (string) $file));
+                        if (\Twig_Environment::MAJOR_VERSION === 1) {
+                            $visitingArgs[] = $this->twig->parse($this->twig->tokenize(file_get_contents($file), (string)$file));
+                        } else {
+                            $twigSource = new \Twig_Source(file_get_contents($file), (string)$file);
+                            $visitingArgs[] = $this->twig->parse($this->twig->tokenize($twigSource));
+                        }
                     }
                 }
 
